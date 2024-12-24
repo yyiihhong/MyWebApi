@@ -39,13 +39,42 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
+    // 配置 Swagger 文檔基本信息
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+
+    // 配置 Customer 類型的映射（可選）
     c.MapType<IEnumerable<Customer>>(() => new OpenApiSchema
     {
         Type = "array",
         Items = new OpenApiSchema { Type = "object" }
     });
+
+    // 配置 Bearer Token 認證方式
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header, // 在請求的標頭中傳遞 token
+        Description = "請輸入 Bearer Token", // 提示文字
+        Name = "Authorization", // 標頭名稱
+        Type = SecuritySchemeType.ApiKey // 定義為 API 密鑰
+    });
+
+    // 配置所有端點需要 Bearer Token 驗證
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer" // 使用前面定義的 Bearer 方案
+                }
+            },
+            new string[] {} // 無需額外的角色或範圍
+        }
+    });
 });
+
 
 // 加入 MSSQL 支援
 builder.Services.AddDbContext<TestContext>(options =>
